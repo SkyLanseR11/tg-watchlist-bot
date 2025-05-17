@@ -1,11 +1,16 @@
 import requests
 import time
 import random
+import os
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 API_URL = "https://api.telegram.org/bot"
 API_CATS_URL = "https://api.thecatapi.com/v1/images/search"
 API_CAPIBARA_URL = "https://api.capy.lol/v1/capybara?json=true"
-BOT_TOKEN = "7814264926:AAEXwf6En428uoBvi-fsX_vBC8b3ug7NS48"
+BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TEXT = "Вот тебе милашная картинка ^_^"
 ERROR_TEXT = "Здесь должна была быть картинка с милахой :("
 MAX_COUNTER = 100
