@@ -1,90 +1,49 @@
-import requests
-import time
-import random
 import os
 
+from aiogram import Bot, Dispatcher
+from aiogram.filters import Command
+from aiogram.types import Message
 from dotenv import load_dotenv
 
 load_dotenv()
 
-API_URL = "https://api.telegram.org/bot"
-API_CATS_URL = "https://api.thecatapi.com/v1/images/search"
-API_CAPIBARA_URL = "https://api.capy.lol/v1/capybara?json=true"
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-TEXT = "Вот тебе милашная картинка ^_^"
-ERROR_TEXT = "Здесь должна была быть картинка с милахой :("
-MAX_COUNTER = 100
-TIMEOUT = 3
+bot = Bot(token=BOT_TOKEN)
+dp = Dispatcher()
 
-counter = 0
-offset = -2
 
-while counter < MAX_COUNTER:
-    print(f"Attempt = {counter}")
+@dp.message(Command(commands=["start"]))
+async def process_start_command(message: Message):
+    await message.answer(
+        f"Привет! Я чат-бот помогающий тебе одному или с кем-то\
+        вместе вести список просмотренного. Набери команду /help, чтобы узнать все команды"
+    )
 
-    updates = requests.get(
-        f"{API_URL}{BOT_TOKEN}/getUpdates", params={"offset": (offset + 1)}
-    ).json()
 
-    if updates["result"]:
-        for result in updates["result"]:
-            offset = result["update_id"]
-            chat_id = result["message"]["from"]["id"]
+@dp.message(Command(commands=["help"]))
+async def process_start_command(message: Message):
+    await message.answer(
+        f"У меня есть следующие команды:\n"
+        f"/start - Запуск бота\n"
+        f"/help - Список команд бота\n"
+        f"/contacts - Контакты для связи\n"
+        f"/add - Добавить фильм, сериал и т.д. (ссылка на него из kinopoisk.ru, kinorium.ru)\n"
+        f"/list - Список добавленных фильмов\n"
+        f"/del - Удалить фильм (по введенной ссылке)"
+    )
 
-            if random.randint(0, 1) == 0:
-                try:
-                    cat_response = requests.get(API_CATS_URL, timeout=TIMEOUT)
-                    if cat_response.status_code == 200:
-                        cat_url = cat_response.json()[0]["url"]
-                        requests.get(
-                            f"{API_URL}{BOT_TOKEN}/sendPhoto",
-                            params={
-                                "chat_id": chat_id,
-                                "photo": cat_url,
-                                "caption": TEXT,
-                            },
-                        )
-                    else:
-                        requests.get(
-                            f"{API_URL}{BOT_TOKEN}/sendMessage",
-                            params={"chat_id": chat_id, "caption": ERROR_TEXT},
-                        )
-                except Exception as e:
-                    requests.get(
-                        f"{API_URL}{BOT_TOKEN}/sendMessage",
-                        params={
-                            "chat_id": chat_id,
-                            "text": f"Ошибка с сервером картинок с котиками: {e}",
-                        },
-                    )
 
-            else:
-                try:
-                    capibara_response = requests.get(API_CAPIBARA_URL, timeout=TIMEOUT)
-                    if capibara_response.status_code == 200:
-                        capibara_url = capibara_response.json()["data"]["url"]
-                        requests.get(
-                            f"{API_URL}{BOT_TOKEN}/sendPhoto",
-                            params={
-                                "chat_id": chat_id,
-                                "photo": capibara_url,
-                                "caption": TEXT,
-                            },
-                        )
-                    else:
-                        requests.get(
-                            f"{API_URL}{BOT_TOKEN}/sendMessage",
-                            params={"chat_id": chat_id, "text": ERROR_TEXT},
-                        )
+@dp.message(Command(commands=["echo"]))
+async def process_start_command(message: Message):
+    await message.answer(
+        "Напиши мне что-нибудь и в ответ" "я пришлю тебе твое сообщение"
+    )
 
-                except Exception as e:
-                    requests.get(
-                        f"{API_URL}{BOT_TOKEN}/sendMessage",
-                        params={
-                            "chat_id": chat_id,
-                            "text": f"Ошибка с сервером картинок с капибарами: {e}",
-                        },
-                    )
 
-    counter += 1
-    time.sleep(1)
+@dp.message()
+async def send_echo(message: Message):
+    await message.reply(text=f"А я повторю за тобой:\n{message.text}")
+
+
+if __name__ == "__main__":
+    dp.run_polling(bot)
